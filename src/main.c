@@ -174,12 +174,10 @@ WavFileInt* wav_file_16_create(AudioBuffer16* buffer, uint16_t numChannels) {
     uint16_t bitDepth = 16;
     uint8_t bytesPerBit = 8;
 
-    uint32_t subChunk2Size = buffer->samples * numChannels * bitDepth / bytesPerBit;
+    uint32_t subChunk2Size = (uint32_t) (buffer->samples * numChannels * bitDepth / bytesPerBit);
 
     WavFmtChunk fmtChunk = wav_format_chunk_create(numChannels, sampleRate, bitDepth);
-
     WavDataChunk dataChunk = wav_data_chunk_create(sampleRate, bitDepth);
-
     WavFileHeader headerChunk = wav_file_header_create(subChunk2Size);
 
     WavFileInt* wavFilePtr = calloc(1, sizeof(WavFileInt));
@@ -187,7 +185,8 @@ WavFileInt* wav_file_16_create(AudioBuffer16* buffer, uint16_t numChannels) {
     WavFileInt wavFile = {
         headerChunk,
         fmtChunk,
-        dataChunk
+        dataChunk,
+        buffer
     };
 
     wavFilePtr = &wavFile;
@@ -211,9 +210,7 @@ int main() {
     
     WavFileInt* wavFile = wav_file_16_create(testBuffer, 2);
 
-
     audio_buffer_16_print(testBuffer);
-
 
 
     free(testBuffer);
