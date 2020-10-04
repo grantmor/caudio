@@ -11,7 +11,7 @@
 
 typedef struct {
     uint16_t frequency;
-    uint32_t samples;
+    uint64_t samples;
     float* data;
 } AudioBuffer32;
 
@@ -47,7 +47,7 @@ typedef struct {
     WavFileHeader header;
     WavFmtChunk fmtChunk;
     WavDataChunk dataChunk;
-    uint8_t* data;
+    float* data;
 } WavFile;
 
 
@@ -70,7 +70,7 @@ bool is_uint32_t_big_endian (const uint32_t value) {
 }
 
 
-uint32_t reverse_endianness_uint32_t (const uint32_t value) {
+uint32_t reverse_endianness_uint32_t ( uint32_t value) {
     const uint32_t rightByte = value & 0xFF000000;
     const uint32_t midRightByte = value & 0x00FF0000;
     const uint32_t midLeftByte = value & 0x0000FF00;
@@ -85,13 +85,13 @@ void wav_file_write() {}
 WavFileHeader wav_file_header_create(uint32_t fileSize) {
 
 
-    const uint8_t chunkId[] = {'R','I','F','F'};
+    uint8_t chunkId[] = {'R','I','F','F'};
     uint32_t chunkSize = 0;
-    const uint8_t format[] = {'W','A','V','E'};
+    uint8_t format[] = {'W','A','V','E'};
 
     chunkSize = is_uint32_t_big_endian ? chunkSize: reverse_endianness_uint32_t(chunkSize);
 
-    WavFileHeader header = {chunkId, chunkSize, format};
+    WavFileHeader header = {*chunkId, chunkSize, *format};
 
     return header;
 }
@@ -112,25 +112,28 @@ float compute_sin_sample(uint16_t frequency, uint64_t sample, float amplitude) {
 }
 
 
-AudioBuffer32* audio_buffer_32_create(uint16_t frequency, uint32_t samples) {
+AudioBuffer32* audio_buffer_32_create(uint16_t frequency, uint64_t samples) {
     AudioBuffer32* buffer = calloc(1, sizeof(AudioBuffer32));
     buffer->frequency = frequency;
     buffer->samples = samples;
+    buffer->data = calloc(samples, sizeof(float));
     return buffer;
 }
 
 
-AudioBuffer32* audio_buffer_32_init(AudioBuffer32* buffer) {
-    for (int i = 0; i < buffer->samples; i ++) {
+AudioBuffer32* audio_buffer_32_init(AudioBuffer32* buffer, uint64_t samples) {
+    for (int i = 0; i < samples; i ++) {
         buffer->data[i] = 0.0; 
     }
+    return buffer;
 }
 
-
-AudioBuffer32 audio_buffer_32_sin(uint16_t frequency, AudioBuffer32* buffer) {
-    for (int i = 0; i < buffer->samples; i ++) {
+// THIS SHOULD RETURN A REFERENCE
+AudioBuffer32* audio_buffer_32_sin(uint16_t frequency, AudioBuffer32* buffer) {
+    for (uint64_t i = 0; i < buffer->samples; i ++) {
         buffer->data[i] = compute_sin_sample(frequency, i, 1.0);
     }
+    return buffer;
 }
 
 
@@ -142,8 +145,11 @@ void audio_buffer_32_print(AudioBuffer32* buffer) {
 
 
 int main() {
-    AudioBuffer32* testBuffer = audio_buffer_32_create(48000, 48000);
-    printf("Hello."); // hack for windows command prompt ... 
-    audio_buffer_32_sin( 440.0, testBuffer);
+    AudioBuffer32* testBuffer = calloc(1, sizeof(AudioBuffer32));
+    
+    testBuffer = audio_buffer_32_create(48000, 32);
+    // printf("Hello."); // hack for windows command prompt ... 
+    testBuffer = audio_buffer_32_sin( 440.0, testBuffer);
     audio_buffer_32_print(testBuffer);
+    return 0;
 }
