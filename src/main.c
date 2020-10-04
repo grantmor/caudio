@@ -128,7 +128,7 @@ AudioBuffer32* audio_buffer_32_init(AudioBuffer32* buffer, uint64_t samples) {
     return buffer;
 }
 
-// THIS SHOULD RETURN A REFERENCE
+
 AudioBuffer32* audio_buffer_32_sin(uint16_t frequency, AudioBuffer32* buffer) {
     for (uint64_t i = 0; i < buffer->samples; i ++) {
         buffer->data[i] = compute_sin_sample(frequency, i, 1.0);
