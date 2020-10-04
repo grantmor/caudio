@@ -82,11 +82,11 @@ WavFileHeader wav_file_header_create(uint32_t fileSize) {
     chunkId = is_system_big_endian() ? chunkId : reverse_endianness_uint32_t(chunkId);
 
     printf("chunkId: %x\n", chunkId);
-
-    uint32_t chunkSize = 0; 
+    
+    uint32_t chunkSize = fileSize - sizeof(chunkId) + sizeof(chunkSize); 
     uint32_t format = 0x57415645; // WAVE in ASCII (big endian)
 
-    chunkSize = is_system_big_endian() ? chunkSize : reverse_endianness_uint32_t(chunkSize);
+    format = is_system_big_endian() ? format : reverse_endianness_uint32_t(format);
     //printf("wav_file_header_create(): chunkSize: %u\n", chunkSize);
     WavFileHeader header = {
         .chunkId = chunkId,
@@ -199,7 +199,7 @@ WavFileInt* wav_file_16_create(AudioBuffer16* buffer, uint16_t numChannels) {
 }
 
 
-uint8_t wav_file_write(WavFileHeader header, WavFmtChunk fmtChunk, WavDataChunk dataChunk) {
+uint8_t wav_file_write(WavFileHeader header, WavFmtChunk fmtChunk, WavDataChunk dataChunk, AudioBuffer16* buffer) {
    // only variable length is the data 
     FILE* file;
     fopen_s(&file, "sin.wav", "wb");
@@ -207,8 +207,9 @@ uint8_t wav_file_write(WavFileHeader header, WavFmtChunk fmtChunk, WavDataChunk 
         return 1;
     } else {
         fwrite(&header, sizeof(header), 1, file);
-        fwrite(&fmtChunk, sizeof(header), 1, file);
-        fwrite(&dataChunk, sizeof(header), 1, file);
+        fwrite(&fmtChunk, sizeof(fmtChunk), 1, file);
+        fwrite(&dataChunk, sizeof(dataChunk), 1, file);
+        fwrite(buffer, sizeof(buffer->data), buffer->samples, file);
     }
 
     fclose(file);
@@ -229,11 +230,13 @@ int main() {
     // WavFileInt* wavFile = wav_file_16_create(testBuffer, 1); 
     //audio_buffer_16_print(testBuffer);
 
-    WavFileHeader header = wav_file_header_create(16); // fix this later
+    uint32_t fileSize = sizeof(WavFileHeader) + sizeof(WavFmtChunk) + sizeof(WavDataChunk) + ( numSamples * sizeof(uint16_t) );
+    WavFileHeader header = wav_file_header_create(fileSize); // fix this later
     WavFmtChunk fmtChunk = wav_format_chunk_create(sampleRate, 1, bitDepth);
     WavDataChunk dataChunk = wav_data_chunk_create(numSamples, bitDepth);
 
-    wav_file_write(header, fmtChunk, dataChunk);
+    wav_file_write(header, fmtChunk, dataChunk, testBuffer);
+
     free(testBuffer);
 
     return 0;
