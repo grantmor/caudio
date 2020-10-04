@@ -7,7 +7,6 @@
 
 
 #define TAU 6.28318530717958647692
-#define FMT 0x666d7420
 
 
 typedef struct {
@@ -27,12 +26,12 @@ typedef struct {
 typedef struct {
     uint32_t subChunk1Id;
     uint32_t subChunk1Size;
-    uint16_t audioFormt;
+    uint16_t audioFormat;
     uint16_t numChannels;
     uint32_t sampleRate;
     uint32_t byteRate;
     uint16_t blockAlign;
-    uint16_t bitsDepth;
+    uint16_t bitDepth;
     // extraParamSize unnecessary for PCM
     // extraParams unnecessary for PCM
 } WavFmtChunk;
@@ -96,14 +95,40 @@ WavFileHeader wav_file_header_create(uint32_t fileSize) {
     return header;
 }
 
+// later, just pass in pointer to audio buffer
+WavFmtChunk wav_format_chunk_create(uint32_t subChunkSize, uint16_t audioFormat, uint16_t numChannels, uint32_t sampleRate, uint16_t bitDepth) {
+    uint32_t subChunkId = 0x666d7420; // fmt  in ASCII
+    audioFormat = 1; // endianness
 
-WavFmtChunk wav_format_chunk_create() {
+    const uint32_t byteRate = (uint32_t) (sampleRate * numChannels * bitDepth / 8);
+    const uint16_t blockAlign = (uint16_t) (numChannels * bitDepth / 8);
     
+    WavFmtChunk fmtChunk = {
+        subChunkId,
+        subChunkSize,
+        audioFormat, // endianness
+        numChannels,
+        sampleRate,
+        byteRate,
+        blockAlign,
+        bitDepth
+    };
+
+    return fmtChunk;
 }
 
+// later, just pass in pointer to audio buffer
+WavDataChunk wav_data_chunk_create(uint64_t samples, uint16_t bitDepth) {
 
-WavDataChunk wav_data_chunk_create() {
+    uint32_t subChunk2Id = 0x64617461;
+    uint32_t subChunk2Size = (uint32_t) (samples * bitDepth / 8); 
 
+    WavDataChunk dataChunk = {
+        subChunk2Id,
+        subChunk2Size
+    };
+
+    return dataChunk;
 } 
 
 
@@ -151,7 +176,10 @@ int main() {
 
     testBuffer = audio_buffer_16_create(48000, 32);
     testBuffer = audio_buffer_16_sin( 440.0, testBuffer);
+
+
     audio_buffer_16_print(testBuffer);
+
 
 
     free(testBuffer);
