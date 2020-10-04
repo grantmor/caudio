@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
+#include <limits.h>
 
 
 #define TAU 6.28318530717958647692
@@ -12,8 +13,8 @@
 typedef struct {
     uint16_t frequency;
     uint64_t samples;
-    float* data;
-} AudioBuffer32;
+    int16_t* data;
+} AudioBuffer16;
 
 
 typedef struct {
@@ -47,11 +48,11 @@ typedef struct {
     WavFileHeader header;
     WavFmtChunk fmtChunk;
     WavDataChunk dataChunk;
-    float* data;
-} WavFile;
+    int16_t* data;
+} WavFile16;
 
 
-WavFile* wav_file_create(WavFileHeader header, WavFmtChunk fmtChunk, WavDataChunk dataChunk, uint8_t* audioData) {
+WavFile16* wav_file_create(WavFileHeader header, WavFmtChunk fmtChunk, WavDataChunk dataChunk, uint8_t* audioData) {
 
 }
 
@@ -83,6 +84,7 @@ void wav_file_write() {}
 
 
 WavFileHeader wav_file_header_create(uint32_t fileSize) {
+    // add support for big endian {RIFX} (pass enum as parameter)
     uint8_t chunkId[] = {'R','I','F','F'};
     uint32_t chunkSize = 0;
     uint8_t format[] = {'W','A','V','E'};
@@ -105,49 +107,63 @@ WavDataChunk wav_data_chunk_create() {
 } 
 
 
-float compute_sin_sample(uint16_t frequency, uint64_t sample, float amplitude) {
-    return sinf((float) sample / (float) frequency * TAU * amplitude); 
-}
-
-
-AudioBuffer32* audio_buffer_32_create(uint16_t frequency, uint64_t samples) {
-    AudioBuffer32* buffer = calloc(1, sizeof(AudioBuffer32));
+AudioBuffer16* audio_buffer_16_create(uint16_t frequency, uint64_t samples) {
+    AudioBuffer16* buffer = calloc(1, sizeof(AudioBuffer16));
     buffer->frequency = frequency;
     buffer->samples = samples;
-    buffer->data = calloc(samples, sizeof(float));
+    buffer->data = calloc(samples, sizeof(int16_t));
     return buffer;
 }
 
 
-AudioBuffer32* audio_buffer_32_init(AudioBuffer32* buffer, uint64_t samples) {
+AudioBuffer16* audio_buffer_16_init(AudioBuffer16* buffer, uint64_t samples) {
     for (int i = 0; i < samples; i ++) {
-        buffer->data[i] = 0.0; 
+        buffer->data[i] = 0; 
     }
+
     return buffer;
 }
 
 
-AudioBuffer32* audio_buffer_32_sin(uint16_t frequency, AudioBuffer32* buffer) {
-    for (uint64_t i = 0; i < buffer->samples; i ++) {
-        buffer->data[i] = compute_sin_sample(frequency, i, 1.0);
+int16_t compute_sin_sample_16(uint16_t frequency, uint64_t sample, int16_t amplitude) {
+    //return (float) sinf((float) sample / (float) frequency * TAU * amplitude); 
+    printf("\narg sample: %d\n", sample);
+    printf("arg frequency: %d\n", frequency);
+    printf("arg amplitude: %d\n", amplitude);
+
+
+    sample = (int16_t) amplitude * sin((double)sample / (double) frequency * TAU);
+
+    printf("sample: %d\n", sample);
+    return sample;
+}
+
+
+AudioBuffer16* audio_buffer_16_sin(uint16_t frequency, AudioBuffer16* buffer) {
+
+
+    for (uint64_t i = 0; i < buffer->samples; i++) {
+        buffer->data[i] = compute_sin_sample_16(frequency, i, INT16_MAX);
     }
+
     return buffer;
 }
 
 
-void audio_buffer_32_print(AudioBuffer32* buffer) {
+void audio_buffer_16_print(AudioBuffer16* buffer) {
     for (int i = 0; i < buffer->samples; i++) {
-            printf("Sample %d: %f\n", i, buffer->data[i]);
+            printf("Sample %d: %d\n", i, buffer->data[i]);
     }
 }
 
 
 int main() {
-    AudioBuffer32* testBuffer = calloc(1, sizeof(AudioBuffer32));
-    
-    testBuffer = audio_buffer_32_create(48000, 32);
-    testBuffer = audio_buffer_32_sin( 440.0, testBuffer);
-    audio_buffer_32_print(testBuffer);
+    AudioBuffer16* testBuffer = calloc(1, sizeof(AudioBuffer16));
+
+    printf("INT16_MAX: %d \n", INT16_MAX);
+    testBuffer = audio_buffer_16_create(48000, 32);
+    testBuffer = audio_buffer_16_sin( 440.0, testBuffer);
+    audio_buffer_16_print(testBuffer);
     free(testBuffer);
     return 0;
 }
