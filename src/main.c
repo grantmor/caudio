@@ -126,22 +126,11 @@ AudioBuffer16* audio_buffer_16_init(AudioBuffer16* buffer, uint64_t samples) {
 
 
 int16_t compute_sin_sample_16(uint16_t frequency, uint64_t sample, int16_t amplitude) {
-    //return (float) sinf((float) sample / (float) frequency * TAU * amplitude); 
-    printf("\narg sample: %d\n", sample);
-    printf("arg frequency: %d\n", frequency);
-    printf("arg amplitude: %d\n", amplitude);
-
-
-    sample = (int16_t) amplitude * sin((double)sample / (double) frequency * TAU);
-
-    printf("sample: %d\n", sample);
-    return sample;
+    return (int16_t) amplitude * sin((double)sample / (double) frequency * TAU);
 }
 
 
 AudioBuffer16* audio_buffer_16_sin(uint16_t frequency, AudioBuffer16* buffer) {
-
-
     for (uint64_t i = 0; i < buffer->samples; i++) {
         buffer->data[i] = compute_sin_sample_16(frequency, i, INT16_MAX);
     }
@@ -160,10 +149,11 @@ void audio_buffer_16_print(AudioBuffer16* buffer) {
 int main() {
     AudioBuffer16* testBuffer = calloc(1, sizeof(AudioBuffer16));
 
-    printf("INT16_MAX: %d \n", INT16_MAX);
     testBuffer = audio_buffer_16_create(48000, 32);
     testBuffer = audio_buffer_16_sin( 440.0, testBuffer);
     audio_buffer_16_print(testBuffer);
+
+
     free(testBuffer);
     return 0;
 }
