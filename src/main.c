@@ -186,7 +186,7 @@ WavFileInt* wav_file_16_create(AudioBuffer16* buffer, uint16_t numChannels) {
         headerChunk,
         fmtChunk,
         dataChunk,
-        buffer
+        buffer->data
     };
 
     wavFilePtr = &wavFile;
