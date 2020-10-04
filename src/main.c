@@ -144,6 +144,9 @@ WavDataChunk wav_data_chunk_create(uint64_t samples, uint16_t bitDepth) {
     uint32_t subChunk2Id = 0x64617461;
     uint32_t subChunk2Size = (uint32_t) (samples * bitDepth / 8); 
 
+    subChunk2Id = is_system_big_endian() ? subChunk2Id : reverse_endianness_uint32_t(subChunk2Id);
+    subChunk2Size = is_system_big_endian() ? subChunk2Size : reverse_endianness_uint32_t(subChunk2Size);
+
     WavDataChunk dataChunk = {
         .subChunk2Id =  subChunk2Id,
         .subChunk2Size = subChunk2Size
