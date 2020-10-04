@@ -57,7 +57,6 @@ WavFile* wav_file_create(WavFileHeader header, WavFmtChunk fmtChunk, WavDataChun
 
 
 bool is_uint32_t_big_endian (const uint32_t value) {
-
     if (value == 0) {
         // check to see if this is ok - should probably log this later
         exit(1);
@@ -82,9 +81,8 @@ uint32_t reverse_endianness_uint32_t ( uint32_t value) {
 
 void wav_file_write() {}
 
+
 WavFileHeader wav_file_header_create(uint32_t fileSize) {
-
-
     uint8_t chunkId[] = {'R','I','F','F'};
     uint32_t chunkSize = 0;
     uint8_t format[] = {'W','A','V','E'};
@@ -150,5 +148,6 @@ int main() {
     testBuffer = audio_buffer_32_create(48000, 32);
     testBuffer = audio_buffer_32_sin( 440.0, testBuffer);
     audio_buffer_32_print(testBuffer);
+    free(testBuffer);
     return 0;
 }
