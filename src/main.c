@@ -105,7 +105,7 @@ WavFmtChunk wav_format_chunk_create(uint16_t numChannels, uint32_t sampleRate, u
 
     const uint32_t byteRate = (uint32_t) (sampleRate * numChannels * bitDepth / 8);
     const uint16_t blockAlign = (uint16_t) (numChannels * bitDepth / 8);
-    
+    subChunkId = is_system_big_endian() ? subChunkId: reverse_endianness_uint32_t(subChunkId); 
     WavFmtChunk fmtChunk = {
         .subChunk1Id = subChunkId,
         .subChunk1Size = subChunkSize,
@@ -199,36 +199,41 @@ WavFileInt* wav_file_16_create(AudioBuffer16* buffer, uint16_t numChannels) {
 }
 
 
-void wav_file_write(WavFileInt* file) {
+uint8_t wav_file_write(WavFileHeader header, WavFmtChunk fmtChunk, WavDataChunk dataChunk) {
    // only variable length is the data 
-}
-
-
-int main() {
-    uint64_t numSamples = 24000; uint16_t sampleRate = 48000;
-    uint16_t noteFrequency = 440.0; 
-   
-    AudioBuffer16* testBuffer = calloc(1, sizeof(AudioBuffer16)); // Add fields to AudioBuffer16? 
-    
-    testBuffer = audio_buffer_16_create(sampleRate, numSamples); 
-    testBuffer = audio_buffer_16_sin(noteFrequency, testBuffer); 
-    WavFileInt* wavFile = wav_file_16_create(testBuffer, 2); 
-    //audio_buffer_16_print(testBuffer);
-                 
     FILE* file;
     fopen_s(&file, "sin.wav", "wb");
     if (file == NULL) {
         return 1;
     } else {
-        printf("size of header: %d\n", sizeof(wavFile->header));
-
-        printf("chunkId before write: %x\n", wavFile->header);
-
-        size_t elementsWritten = fwrite(&wavFile->header, sizeof(wavFile->header.chunkId), 1, file);
-        printf("%d elements written.", elementsWritten);
+        fwrite(&header, sizeof(header), 1, file);
+        fwrite(&fmtChunk, sizeof(header), 1, file);
+        fwrite(&dataChunk, sizeof(header), 1, file);
     }
 
     fclose(file);
+}
+
+
+int main() {
+    uint64_t numSamples = 24000; 
+    uint16_t sampleRate = 48000;
+    uint16_t noteFrequency = 440.0; 
+    uint16_t bitDepth = 16;
+   
+    AudioBuffer16* testBuffer = calloc(1, sizeof(AudioBuffer16)); // Add fields to AudioBuffer16? 
+    
+    testBuffer = audio_buffer_16_create(sampleRate, numSamples); 
+    testBuffer = audio_buffer_16_sin(noteFrequency, testBuffer); 
+
+    // WavFileInt* wavFile = wav_file_16_create(testBuffer, 1); 
+    //audio_buffer_16_print(testBuffer);
+
+    WavFileHeader header = wav_file_header_create(16); // fix this later
+    WavFmtChunk fmtChunk = wav_format_chunk_create(sampleRate, 1, bitDepth);
+    WavDataChunk dataChunk = wav_data_chunk_create(numSamples, bitDepth);
+
+    wav_file_write(header, fmtChunk, dataChunk);
     free(testBuffer);
 
     return 0;
