@@ -81,12 +81,18 @@ WavFileHeader wav_file_header_create(uint32_t fileSize) {
     uint32_t chunkId = 0x52494646; //RIFF in ASCII (big endian)
     chunkId = is_system_big_endian() ? chunkId : reverse_endianness_uint32_t(chunkId);
 
+    printf("chunkId: %x\n", chunkId);
+
     uint32_t chunkSize = 0; 
     uint32_t format = 0x57415645; // WAVE in ASCII (big endian)
 
     chunkSize = is_system_big_endian() ? chunkSize : reverse_endianness_uint32_t(chunkSize);
     //printf("wav_file_header_create(): chunkSize: %u\n", chunkSize);
-    WavFileHeader header = {chunkId, chunkSize, format};
+    WavFileHeader header = {
+        .chunkId = chunkId,
+        .chunkSize = chunkSize, 
+        .format = format
+    };
 
     return header;
 }
@@ -101,14 +107,14 @@ WavFmtChunk wav_format_chunk_create(uint16_t numChannels, uint32_t sampleRate, u
     const uint16_t blockAlign = (uint16_t) (numChannels * bitDepth / 8);
     
     WavFmtChunk fmtChunk = {
-        subChunkId,
-        subChunkSize,
-        audioFormat, // endianness
-        numChannels,
-        sampleRate,
-        byteRate,
-        blockAlign,
-        bitDepth
+        .subChunk1Id = subChunkId,
+        .subChunk1Size = subChunkSize,
+        .audioFormat = audioFormat, // endianness
+        .numChannels  = numChannels,
+        .sampleRate = sampleRate,
+        .byteRate = byteRate,
+        .blockAlign = blockAlign,
+        .bitDepth =  bitDepth
     };
 
     return fmtChunk;
@@ -121,8 +127,8 @@ WavDataChunk wav_data_chunk_create(uint64_t samples, uint16_t bitDepth) {
     uint32_t subChunk2Size = (uint32_t) (samples * bitDepth / 8); 
 
     WavDataChunk dataChunk = {
-        subChunk2Id,
-        subChunk2Size
+        .subChunk2Id =  subChunk2Id,
+        .subChunk2Size = subChunk2Size
     };
 
     return dataChunk;
@@ -182,10 +188,10 @@ WavFileInt* wav_file_16_create(AudioBuffer16* buffer, uint16_t numChannels) {
     WavFileInt* wavFilePtr = calloc(1, sizeof(WavFileInt));
 
     WavFileInt wavFile = {
-        headerChunk,
-        fmtChunk,
-        dataChunk,
-        buffer->data
+        .header = headerChunk,
+        .fmtChunk = fmtChunk,
+        .dataChunk = dataChunk,
+        .data = buffer->data
     };
 
     wavFilePtr = &wavFile;
@@ -199,8 +205,6 @@ void wav_file_write(WavFileInt* file) {
 
 
 int main() {
-    
-    const char* WAV_HEADER_FORMAT_OUT = "(%u,%u,%u)"; 
     uint64_t numSamples = 24000; uint16_t sampleRate = 48000;
     uint16_t noteFrequency = 440.0; 
    
@@ -216,8 +220,11 @@ int main() {
     if (file == NULL) {
         return 1;
     } else {
-        printf("size of chunkId: %d\n", sizeof(wavFile->header.chunkId));
-        size_t elementsWritten = fwrite(&wavFile->header.chunkId, sizeof(wavFile->header.chunkId), 1, file);
+        printf("size of header: %d\n", sizeof(wavFile->header));
+
+        printf("chunkId before write: %x\n", wavFile->header);
+
+        size_t elementsWritten = fwrite(&wavFile->header, sizeof(wavFile->header.chunkId), 1, file);
         printf("%d elements written.", elementsWritten);
     }
 
