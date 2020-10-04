@@ -148,7 +148,6 @@ int main() {
     AudioBuffer32* testBuffer = calloc(1, sizeof(AudioBuffer32));
     
     testBuffer = audio_buffer_32_create(48000, 32);
-    // printf("Hello."); // hack for windows command prompt ... 
     testBuffer = audio_buffer_32_sin( 440.0, testBuffer);
     audio_buffer_32_print(testBuffer);
     return 0;
