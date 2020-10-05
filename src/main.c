@@ -141,7 +141,7 @@ WavFmtChunk wav_format_chunk_create(uint16_t numChannels, uint32_t sampleRate, u
 
 WavDataChunk wav_data_chunk_create(uint64_t samples, uint16_t bitDepth) {
 
-    uint32_t subChunk2Id = 0x64617461;
+    uint32_t subChunk2Id = 0x64617461; // "data"
     uint32_t subChunk2Size = (uint32_t) (samples * bitDepth / 8); 
 
     subChunk2Id = is_system_big_endian() ? subChunk2Id : reverse_endianness_uint32_t(subChunk2Id);
@@ -227,11 +227,15 @@ uint8_t wav_file_write(WavFileHeader header, WavFmtChunk fmtChunk, WavDataChunk 
     if (file == NULL) {
         return 1;
     } else {
-        // These are "double pointers"
         fwrite(&header, sizeof(header), 1, file);
         fwrite(&fmtChunk, sizeof(fmtChunk), 1, file);
         fwrite(&dataChunk, sizeof(dataChunk), 1, file);
-        fwrite(&buffer, sizeof(buffer->data), buffer->samples, file);
+        printf("data element size in bytes: %d\n", sizeof(buffer->data[0]));
+        printf("buffer->samples: %d\n", buffer->samples);
+
+        size_t bytes_written = fwrite(buffer->data, sizeof(buffer->data[0]), buffer->samples, file);
+
+        printf("bytes written: %d\n", bytes_written);
     }
 
     fclose(file);
@@ -253,7 +257,7 @@ int main() {
     audio_buffer_16_print(testBuffer);
 
     uint32_t fileSize = sizeof(WavFileHeader) + sizeof(WavFmtChunk) + sizeof(WavDataChunk) + ( numSamples * sizeof(uint16_t) );
-    WavFileHeader header = wav_file_header_create(fileSize); // fix this later
+    WavFileHeader header = wav_file_header_create(fileSize); 
     WavFmtChunk fmtChunk = wav_format_chunk_create(sampleRate, 1, bitDepth);
     WavDataChunk dataChunk = wav_data_chunk_create(numSamples, bitDepth);
 
