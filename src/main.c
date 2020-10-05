@@ -84,14 +84,15 @@ uint32_t reverse_endianness_uint16_t ( uint16_t value) {
 }
 
 
-WavFileHeader wav_file_header_create(uint32_t fileSize) {
+WavFileHeader wav_file_header_create(uint32_t dataSize) {
 
     // add support for big endian {RIFX} (pass enum as parameter)
     
     uint32_t chunkId = 0x52494646; //RIFF in ASCII (big endian)
     chunkId = is_system_big_endian() ? chunkId : reverse_endianness_uint32_t(chunkId);
     
-    uint32_t chunkSize = fileSize - sizeof(chunkId) + sizeof(chunkSize); 
+    // uint32_t chunkSize = fileSize - sizeof(chunkId) + sizeof(chunkSize); 
+    uint32_t chunkSize = dataSize;
     chunkSize = is_system_big_endian() ? chunkSize : reverse_endianness_uint32_t(chunkSize);
 
     uint32_t format = 0x57415645; // WAVE in ASCII (big endian)
@@ -247,6 +248,7 @@ int main() {
     uint16_t sampleRate = 48000;
     uint16_t noteFrequency = 440.0; 
     uint16_t bitDepth = 16;
+    uint16_t numChannels = 1;
    
     AudioBuffer16* testBuffer = calloc(1, sizeof(AudioBuffer16)); // Add fields to AudioBuffer16? 
     
@@ -256,9 +258,11 @@ int main() {
     // WavFileInt* wavFile = wav_file_16_create(testBuffer, 1); 
     audio_buffer_16_print(testBuffer);
 
-    uint32_t fileSize = sizeof(WavFileHeader) + sizeof(WavFmtChunk) + sizeof(WavDataChunk) + ( numSamples * sizeof(uint16_t) );
-    WavFileHeader header = wav_file_header_create(fileSize); 
-    WavFmtChunk fmtChunk = wav_format_chunk_create(sampleRate, 1, bitDepth);
+    //uint32_t dataSize = sizeof(WavFileHeader) + sizeof(WavFmtChunk) + sizeof(WavDataChunk) + ( numSamples * sizeof(uint16_t) );
+    uint32_t dataSize = 36 + ( sizeof(uint16_t) * numSamples * numChannels );
+
+    WavFileHeader header = wav_file_header_create(dataSize); 
+    WavFmtChunk fmtChunk = wav_format_chunk_create(sampleRate, numChannels, bitDepth);
     WavDataChunk dataChunk = wav_data_chunk_create(numSamples, bitDepth);
 
     wav_file_write(header, fmtChunk, dataChunk, testBuffer);
