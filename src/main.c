@@ -74,7 +74,7 @@ uint32_t reverse_endianness_uint32_t ( uint32_t value) {
     return ( ( rightByte >> ( 3 * bitsPerByte) ) | (midRightByte >> (1 * bitsPerByte) ) | (midLeftByte << (1 * bitsPerByte) ) | (leftByte << (3 * bitsPerByte) ) );
 }
 
-uint32_t reverse_endianness_uint16_t ( uint16_t value) {
+uint16_t reverse_endianness_uint16_t ( uint16_t value) {
     const uint8_t bitsPerByte = 8;
 
     const uint16_t rightByte = (value & 0xFF00);
@@ -262,7 +262,7 @@ int main() {
     uint32_t dataSize = ( sizeof(uint16_t) * numSamples * numChannels );
 
     WavFileHeader header = wav_file_header_create(dataSize); 
-    WavFmtChunk fmtChunk = wav_format_chunk_create(sampleRate, numChannels, bitDepth);
+    WavFmtChunk fmtChunk = wav_format_chunk_create(numChannels, sampleRate, bitDepth);
     WavDataChunk dataChunk = wav_data_chunk_create(numSamples, bitDepth);
 
     wav_file_write(header, fmtChunk, dataChunk, testBuffer);
