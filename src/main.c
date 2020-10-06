@@ -91,9 +91,7 @@ WavFileHeader wav_file_header_create(uint32_t dataSize) {
     uint32_t chunkId = 0x52494646; //RIFF in ASCII (big endian)
     chunkId = is_system_big_endian() ? chunkId : reverse_endianness_uint32_t(chunkId);
     
-    // uint32_t chunkSize = fileSize - sizeof(chunkId) + sizeof(chunkSize); 
     uint32_t chunkSize =  36 + dataSize;
-    chunkSize = is_system_big_endian() ? chunkSize : reverse_endianness_uint32_t(chunkSize);
 
     uint32_t format = 0x57415645; // WAVE in ASCII (big endian)
     format = is_system_big_endian() ? format : reverse_endianness_uint32_t(format);
@@ -117,13 +115,6 @@ WavFmtChunk wav_format_chunk_create(uint16_t numChannels, uint32_t sampleRate, u
     uint16_t blockAlign = (uint16_t) (numChannels * bitDepth / 8);
 
     subChunk1Id = is_system_big_endian() ? subChunk1Id : reverse_endianness_uint32_t(subChunk1Id); 
-    subChunk1Size = is_system_big_endian() ? subChunk1Size : reverse_endianness_uint32_t(subChunk1Size); 
-    audioFormat = is_system_big_endian() ? audioFormat : reverse_endianness_uint16_t(audioFormat); 
-    numChannels = is_system_big_endian() ? numChannels : reverse_endianness_uint16_t(numChannels); 
-    sampleRate = is_system_big_endian() ? sampleRate : reverse_endianness_uint32_t(sampleRate); 
-    byteRate = is_system_big_endian() ? byteRate : reverse_endianness_uint32_t(byteRate);
-    blockAlign = is_system_big_endian() ? blockAlign : reverse_endianness_uint16_t(blockAlign); 
-    bitDepth = is_system_big_endian() ? bitDepth : reverse_endianness_uint16_t(bitDepth); 
 
     WavFmtChunk fmtChunk = {
         .subChunk1Id = subChunk1Id,
@@ -140,13 +131,12 @@ WavFmtChunk wav_format_chunk_create(uint16_t numChannels, uint32_t sampleRate, u
 }
 
 
-WavDataChunk wav_data_chunk_create(uint64_t samples, uint16_t bitDepth) {
+WavDataChunk wav_data_chunk_create(uint32_t numChannels, uint32_t numSamples, uint16_t bitDepth) {
 
     uint32_t subChunk2Id = 0x64617461; // "data"
-    uint32_t subChunk2Size = (uint32_t) (samples * bitDepth / 8); 
+    uint32_t subChunk2Size = (uint32_t) (numSamples * numChannels * bitDepth / 8); 
 
     subChunk2Id = is_system_big_endian() ? subChunk2Id : reverse_endianness_uint32_t(subChunk2Id);
-    subChunk2Size = is_system_big_endian() ? subChunk2Size : reverse_endianness_uint32_t(subChunk2Size);
 
     WavDataChunk dataChunk = {
         .subChunk2Id =  subChunk2Id,
@@ -204,7 +194,7 @@ WavFileInt* wav_file_16_create(AudioBuffer16* buffer, uint16_t numChannels) {
     uint32_t subChunk2Size = (uint32_t) (buffer->samples * numChannels * bitDepth / bytesPerBit);
 
     WavFmtChunk fmtChunk = wav_format_chunk_create(numChannels, sampleRate, bitDepth);
-    WavDataChunk dataChunk = wav_data_chunk_create(sampleRate, bitDepth);
+    WavDataChunk dataChunk = wav_data_chunk_create(numChannels, sampleRate, bitDepth);
     WavFileHeader headerChunk = wav_file_header_create(subChunk2Size);
 
     WavFileInt* wavFilePtr = calloc(1, sizeof(WavFileInt));
@@ -244,7 +234,7 @@ uint8_t wav_file_write(WavFileHeader header, WavFmtChunk fmtChunk, WavDataChunk 
 
 
 int main() {
-    uint64_t numSamples = 48000;
+    uint32_t numSamples = 48000;
     uint16_t sampleRate = 48000;
     uint16_t noteFrequency = 440.0; 
     uint16_t bitDepth = 16;
@@ -263,7 +253,7 @@ int main() {
 
     WavFileHeader header = wav_file_header_create(dataSize); 
     WavFmtChunk fmtChunk = wav_format_chunk_create(numChannels, sampleRate, bitDepth);
-    WavDataChunk dataChunk = wav_data_chunk_create(numSamples, bitDepth);
+    WavDataChunk dataChunk = wav_data_chunk_create(numChannels, numSamples, bitDepth);
 
     wav_file_write(header, fmtChunk, dataChunk, testBuffer);
 
