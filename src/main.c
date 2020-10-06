@@ -166,7 +166,8 @@ AudioBuffer16* audio_buffer_16_init(AudioBuffer16* buffer, uint64_t samples) {
 
 
 int16_t compute_sin_sample_16(uint16_t frequency, uint64_t sample, int16_t amplitude) {
-    return (int16_t) amplitude * sin((double)sample / (double) frequency * TAU);
+    const double quarterRotations = 4.0;
+    return (int16_t) ( amplitude * sin( (double) sample / (double) frequency * TAU * quarterRotations) );
 }
 
 
